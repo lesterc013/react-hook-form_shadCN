@@ -1,70 +1,111 @@
 "use client";
 
-import { db } from "@/db";
-import { useForm, SubmitHandler } from "react-hook-form"; // SubmitHandler is to check whether what is submitted is of same type as the FormValues type
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { error } from "console";
+import { useForm } from "react-hook-form";
 
-// Dont need this if got zod
-// type FormValues = {
-//     name: string;
-//     email: string;
-//     password: string;
-// };
+import { Button } from "@/components/ui/button";
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+    FormRootError,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
-const schema = z.object({
+const formSchema = z.object({
     name: z.string().min(3, "Name must be at least 3 characters"),
     email: z.string().email("Must be valid email"),
 });
 
 export default function RegisterPage() {
-    // useForm will return many stuff but these are the essential ones; register to register an input into rhf; handleSubmit which will validate inputs before invoking the submit action (submitForm in this case)
-    const {
-        register,
-        handleSubmit,
-        formState: { errors, isSubmitting },
-        setError,
-    } = useForm({
-        resolver: zodResolver(schema),
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: "",
+            email: "",
+        },
     });
 
     const submitForm = async (data) => {
         try {
             await new Promise((resolve) => setTimeout(resolve, 1000));
             throw new Error();
+            console.log(data);
         } catch (error) {
-            setError("root", {
+            form.setError("root", {
                 message: "Form failed to submit",
             });
         }
-        console.log(data);
     };
 
     return (
-        <>
-            <form onSubmit={handleSubmit(submitForm)}>
-                <label htmlFor="name">Name: </label>
-                <input {...register("name")} />
-                {errors.name && typeof errors.name.message === "string" && (
-                    <div>{errors.name.message}</div>
-                )}
-                <br />
-
-                <label htmlFor="email">Email: </label>
-                <input {...register("email")} />
-                {errors.email && typeof errors.email.message === "string" && (
-                    <div>{errors.email.message}</div>
-                )}
-                <br />
-
-                <button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Loading" : "Submit"}
-                </button>
-                {errors.root && typeof errors.root.message === "string" && (
-                    <div>{errors.root.message}</div>
-                )}
+        <Form {...form}>
+            <form
+                onSubmit={form.handleSubmit(submitForm)}
+                className="space-y-8 p-8"
+            >
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Name: </FormLabel>
+                            <FormControl>
+                                <Input placeholder="Cester Lhan" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                                This is your public display name.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Email: </FormLabel>
+                            <FormControl>
+                                <Input
+                                    placeholder="l33tSW3@gmail.com"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormDescription>
+                                This is your email.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Select>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Music Genre" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="blues">Blues</SelectItem>
+                        <SelectItem value="rock">Rock</SelectItem>
+                        <SelectItem value="lofi">Lofi</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "Loading" : "Submit"}
+                </Button>
+                <FormRootError />
             </form>
-        </>
+        </Form>
     );
 }
